@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Normal Scientific Calculator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at center, #1a1a1a, #0a0a0a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            padding: 10px;
+        }
+
+        .calculator {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 40px;
+            box-shadow: 0px 20px 40px rgba(0,0,0,0.9), inset -2px -2px 8px rgba(0,0,0,0.8), inset 2px 2px 8px rgba(255,255,255,0.05);
+            border: 1px solid #333;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .display {
+            background: #0a0a0a;
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: right;
+            border: 2px solid #2a2a2a;
+            box-shadow: inset 0px 4px 12px rgba(0,0,0,0.9);
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            word-break: break-all;
+        }
+
+        .display .history {
+            color: #6a8a7a;
+            font-size: 12px;
+            min-height: 18px;
+            font-family: 'Courier New', monospace;
+            opacity: 0.7;
+        }
+
+        .display .result {
+            color: #00ffc8;
+            font-size: 28px;
+            font-weight: 700;
+            text-shadow: 0 0 15px #00ffc855;
+            transition: 0.1s;
+        }
+
+        .display .error {
+            color: #ff4444;
+            text-shadow: 0 0 15px #ff000066;
+            font-size: 20px;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .btn {
+            background: linear-gradient(145deg, #3c3c3c, #262626);
+            border: none;
+            border-radius: 14px;
+            padding: 15px 0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: #dddddd;
+            box-shadow: 3px 3px 6px #0a0a0a, -2px -2px 5px #4f4f4f;
+            cursor: pointer;
+            transition: all 0.07s ease-in-out;
+            text-shadow: 0 1px 0 #00000055;
+        }
+
+        .btn:active {
+            transform: scale(0.93);
+            box-shadow: inset 3px 3px 6px #0a0a0a, inset -2px -2px 5px #4f4f4f;
+            background: #2a2a2a;
+        }
+
+        .btn-function {
+            background: linear-gradient(145deg, #2a3a5a, #1a2a3a);
+            color: #8ab8ff;
+            box-shadow: 3px 3px 6px #0a0a0a, -2px -2px 5px #2a4a6a;
+            font-size: 12px;
+        }
+
+        .btn-operator {
+            background: linear-gradient(145deg, #2a4a3a, #1a2a2a);
+            color: #5f9;
+            box-shadow: 3px 3px 6px #0a0a0a, -2px -2px 5px #2a4a3a;
+        }
+
+        .btn-equals {
+            background: linear-gradient(145deg, #c87a1a, #8a4e0a);
+            color: #ffffff;
+            box-shadow: 3px 3px 6px #0a0a0a, -2px -2px 5px #ffaa33;
+            font-size: 24px;
+            grid-column: span 5;
+        }
+
+        .btn-clear {
+            background: linear-gradient(145deg, #5a2a2a, #3a1414);
+            color: #ff7777;
+            box-shadow: 3px 3px 6px #0a0a0a, -2px -2px 5px #6a3a3a;
+        }
+
+        .hidden-submit {
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .btn { font-size: 14px; padding: 12px 0; }
+            .display .result { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+<div class="calculator">
+    <div class="display">
+        <div class="history" id="historyDisplay"></div>
+        <div class="result" id="resultDisplay">
+            {% if result %}
+                {{ result }}
+            {% else %}
+                0
+            {% endif %}
+        </div>
+    </div>
+
+    <form method="POST" action="/" id="calcForm">
+        <input type="text" name="expression" id="expressionInput" class="hidden-submit" autofocus>
+
+        <div class="buttons">
+            <!-- Row 1: The Transcendental Beasts (Trig + Log + Sqrt) -->
+            <button type="button" class="btn btn-function" onclick="appendToDisplay('sin(')">sin</button>
+            <button type="button" class="btn btn-function" onclick="appendToDisplay('cos(')">cos</button>
+            <button type="button" class="btn btn-function" onclick="appendToDisplay('tan(')">tan</button>
+            <button type="button" class="btn btn-function" onclick="appendToDisplay('log(')">log</button>
+            <button type="button" class="btn btn-function" onclick="appendToDisplay('sqrt(')">√</button>
+
+            <!-- Row 2: Brackets, Power, Factorial, Clear -->
+            <button type="button" class="btn" onclick="appendToDisplay('(')">(</button>
+            <button type="button" class="btn" onclick="appendToDisplay(')')">)</button>
+            <button type="button" class="btn btn-operator" onclick="appendToDisplay('^')">x^y</button>
+            <button type="button" class="btn" onclick="appendToDisplay('!')">x!</button>
+            <button type="button" class="btn btn-clear" onclick="clearDisplay()">AC</button>
+
+            <!-- Row 3: Numbers 7,8,9 & Division/Multiplication -->
+            <button type="button" class="btn" onclick="appendToDisplay('7')">7</button>
+            <button type="button" class="btn" onclick="appendToDisplay('8')">8</button>
+            <button type="button" class="btn" onclick="appendToDisplay('9')">9</button>
+            <button type="button" class="btn btn-operator" onclick="appendToDisplay('/')">÷</button>
+            <button type="button" class="btn btn-operator" onclick="appendToDisplay('*')">×</button>
+
+            <!-- Row 4: Numbers 4,5,6 & Subtraction/Addition -->
+            <button type="button" class="btn" onclick="appendToDisplay('4')">4</button>
+            <button type="button" class="btn" onclick="appendToDisplay('5')">5</button>
+            <button type="button" class="btn" onclick="appendToDisplay('6')">6</button>
+            <button type="button" class="btn btn-operator" onclick="appendToDisplay('-')">−</button>
+            <button type="button" class="btn btn-operator" onclick="appendToDisplay('+')">+</button>
+
+            <!-- Row 5: Numbers 1,2,3,0, Decimal -->
+            <button type="button" class="btn" onclick="appendToDisplay('1')">1</button>
+            <button type="button" class="btn" onclick="appendToDisplay('2')">2</button>
+            <button type="button" class="btn" onclick="appendToDisplay('3')">3</button>
+            <button type="button" class="btn" onclick="appendToDisplay('0')">0</button>
+            <button type="button" class="btn" onclick="appendToDisplay('.')">.</button>
+
+            <!-- Row 6: The Big Equals -->
+            <button type="button" class="btn btn-equals" onclick="submitForm()">=</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let currentDisplay = '';
+    const resultDisplay = document.getElementById('resultDisplay');
+    const historyDisplay = document.getElementById('historyDisplay');
+    const expressionInput = document.getElementById('expressionInput');
+
+    function appendToDisplay(value) {
+        currentDisplay += value;
+        resultDisplay.textContent = currentDisplay;
+        expressionInput.value = currentDisplay;
+        // Reset error style if user types new stuff
+        resultDisplay.className = 'result';
+    }
+
+    function clearDisplay() {
+        currentDisplay = '';
+        resultDisplay.textContent = '0';
+        historyDisplay.textContent = '';
+        expressionInput.value = '';
+        resultDisplay.className = 'result';
+    }
+
+    function submitForm() {
+        if (currentDisplay.trim() === '') {
+            resultDisplay.textContent = 'Error';
+            resultDisplay.className = 'result error';
+            return;
+        }
+        // Pass the expression to Flask
+        expressionInput.value = currentDisplay;
+        document.getElementById('calcForm').submit();
+    }
+
+    // Keyboard support for the power user
+    document.addEventListener('keydown', function(event) {
+        const key = event.key;
+        if (key === 'Enter') {
+            event.preventDefault();
+            submitForm();
+            return;
+        }
+        const validChars = '0123456789+-*/().^!';
+        if (validChars.includes(key)) {
+            appendToDisplay(key);
+        }
+        if (key === 'Backspace') {
+            currentDisplay = currentDisplay.slice(0, -1);
+            resultDisplay.textContent = currentDisplay || '0';
+            expressionInput.value = currentDisplay;
+        }
+        if (key === 'Escape') {
+            clearDisplay();
+        }
+    });
+
+    // --- THE COMBINED ERROR DETECTION & DISPLAY ENGINE ---
+    window.onload = function() {
+        const flaskResult = "{{ result|default('') }}";
+        if (flaskResult && flaskResult !== '0') {
+            const display = document.getElementById('resultDisplay');
+            // CATCH ALL ERRORS (including 'empty', 'False', 'Syntax Error', 'division by zero')
+            if (flaskResult === 'Error' || flaskResult.includes('error') || flaskResult === 'False' || flaskResult === 'empty') {
+                display.className = 'result error';
+                // Make the error message human-readable
+                if (flaskResult === 'empty') {
+                    display.textContent = 'Empty Bracket!';
+                } else if (flaskResult === 'False') {
+                    display.textContent = 'Math Error!';
+                } else {
+                    display.textContent = flaskResult;
+                }
+            } else {
+                display.className = 'result';
+                // Ensure the result is displayed cleanly
+                display.textContent = flaskResult;
+            }
+        }
+    }
+</script>
+</body>
+</html>
