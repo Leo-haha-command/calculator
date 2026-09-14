@@ -14,16 +14,16 @@ kernel_matern = 1.0 * Matern(length_scale=10.0, nu=1.5)
 model_rbf = GaussianProcessRegressor(kernel=kernel_rbf, alpha=1e-6)
 model_matern = GaussianProcessRegressor(kernel=kernel_matern, alpha=1e-6)
 
-# --- 3. 訓練（就兩個字：fit）---
+# --- 3. 訓練---
 model_rbf.fit(X, y)
 model_matern.fit(X, y)
 
-# --- 4. 預測（就兩個字：predict）---
+# --- 4. 預測---
 X_pred = np.linspace(0, 100, 200).reshape(-1, 1)
 y_rbf, std_rbf = model_rbf.predict(X_pred, return_std=True)
 y_matern, std_matern = model_matern.predict(X_pred, return_std=True)
 
-# --- 5. 畫圖（看看差別）---
+# --- 5. 畫---
 plt.figure(figsize=(10, 5))
 plt.scatter(X, y, c='red', label='文獻數據點')
 plt.plot(X_pred, y_rbf, '--', label='RBF (平滑)')
